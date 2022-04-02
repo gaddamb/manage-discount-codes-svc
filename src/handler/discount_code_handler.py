@@ -28,5 +28,11 @@ class FetchDiscountHandler(RequestHandler):
     
     async def get(self):
         ds = DiscountCodeService(None)        
-
-        self.write(json.dumps(ds.fetch_discount_code_for_user('')))
+        auth_header = self.request.headers.get('Authorization')
+        if auth_header is None:
+            self.write("invlid user access")
+        elif len(auth_header.split(' ')) > 2 or len(auth_header.split(' ')) == 0:
+            self.write("invlid user token")
+        else:
+            token = auth_header.split(' ')[1]
+            self.write(json.dumps(ds.fetch_discount_code_for_user(token)))

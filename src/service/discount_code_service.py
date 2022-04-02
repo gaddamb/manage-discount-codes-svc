@@ -1,7 +1,8 @@
 
-from src.utils.utils import generate_random_code
+from src.utils.utils import generate_random_code, verify_user_with_token_and_return_user
 import pandas as pd
 from src.config.config import config
+import os
 from os.path import exists
 import shutil
 import time
@@ -12,13 +13,20 @@ class DiscountCodeService():
         self.data =  data
         if data is not None and config()['create_new_data_store']:        
             self.data_store_struct = {'discount_code':  [] , 'percentage':  [] , 'is_active':  [] , 'user_id':  [] }
-            self.create_data_store()
+            self.create_data_store(self.data_store_struct)
         
-    def create_data_store(self):    
-        if exists('data/discount_table.csv'):
-            file_name = 'discount_table_' + time.strftime("%Y%m%d-%H%M%S") 
-            shutil.move('data/discount_table.csv', 'data/{}.csv'.format(file_name))
-        self.write_to_data_store(self.data_store_struct)
+    def create_data_store(self, data_store_struct, delete_existing_file=False):    
+        file_name='data/discount_table.csv'
+        if exists(file_name):
+            if delete_existing_file:
+                try:
+                    os.remove(file_name)
+                except OSError as e:  ## if failed, report it back to the user ##
+                    print ("Error: %s - %s." % (e.filename, e.strerror))
+            else:
+                bak_file_name = 'discount_table_' + time.strftime("%Y%m%d-%H%M%S") 
+                shutil.move(file_name, 'data/{}.csv'.format(bak_file_name))
+        self.write_to_data_store(data_store_struct)
 
 
     def create_discount_code(self):
@@ -31,8 +39,8 @@ class DiscountCodeService():
             code, percentage = generate_random_code()
             discount_codes.append(code)
             percentages.append(percentage)
-            active_states.append('active')
-            user_ids.append('')
+            active_states.append(True)
+            user_ids.append('NONE')
         
         discount_dict = {
             'discount_code' : discount_codes,
@@ -50,10 +58,19 @@ class DiscountCodeService():
             else:
                 df.to_csv('data/discount_table.csv', index=False)
 
-    def fetch_discount_code_for_user(self, user):
+    def fetch_discount_code_for_user(self, token):
+        user = verify_user_with_token_and_return_user(token=token)
         df = pd.read_csv('data/discount_table.csv')
-        df.loc[df['is_active'] == 'active']
-        return { 'code' : df.discount_code[0], 'percentage': df.percentage[0]}
+
+        if not df[(df['user_id'] == 'NONE') & (df['is_active'] == True)].empty :
+            index = df.index[(df['user_id'] == 'NONE') & (df['is_active'] == True)][0]
+            discount_code = df.at[index, 'discount_code']
+            percentage = df.at[index, 'percentage']
+            df.at[index, 'user_id'] = user['userinfo']['email']
+            self.create_data_store(data_store_struct=df.to_dict(), delete_existing_file=True)
+            return { 'code' : discount_code, 'percentage': percentage}
+        else :            
+            return {'message' : 'could not fetch code'}
 
     def fetch_all_discount_codes(self):
         df = pd.read_csv('discount_table.csv')
