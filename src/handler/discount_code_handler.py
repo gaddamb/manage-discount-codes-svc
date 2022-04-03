@@ -1,8 +1,8 @@
 from tornado.web import RequestHandler
 import tornado
 import json 
-import logging
 from src.service.discount_code_service import DiscountCodeService
+from src.config.config import config
 
 class CreateDiscountHandler(RequestHandler):
     def prepare(self):
@@ -16,18 +16,17 @@ class CreateDiscountHandler(RequestHandler):
 
     
     async def post(self):
-        ds = DiscountCodeService(self.request_payload)
-
+        ds = DiscountCodeService(self.request_payload, config())
         discount_codes = ds.create_discount_code()
-
         ds.write_to_data_store(discount_dict=discount_codes)
+        self.write(discount_codes)
 
 class FetchDiscountHandler(RequestHandler):
     def prepare(self):
         super(FetchDiscountHandler, self).prepare()
     
     async def get(self):
-        ds = DiscountCodeService(None)        
+        ds = DiscountCodeService(None, config=config())        
         auth_header = self.request.headers.get('Authorization')
         if auth_header is None:
             self.write("invlid user access")

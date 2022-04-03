@@ -1,5 +1,6 @@
 #!/usr/bin/python
 from configparser import ConfigParser
+import logging
  
 def config(filename='src/config/config.ini', section='default'):
     # create a parser
@@ -22,3 +23,14 @@ def config(filename='src/config/config.ini', section='default'):
  
     return conf
 
+def get_logger():
+    Log_Format = "%(levelname)s %(asctime)s - %(message)s"
+
+    logging.basicConfig(filename = "service.log",
+                        filemode = "w",
+                        format = Log_Format, 
+                        level = logging.ERROR)
+
+    return logging.getLogger()
+
+logger = get_logger()
