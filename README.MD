@@ -20,7 +20,10 @@ To run tests
 ### > make test
 
 ## access end point 
-2- POST (**/createCode**) - Create dicsount codes - HTTP Response Code: **200**
+If ran without docker file then : **http://localhost:5000/
+If ran with docker container : **http://localhost:8080/
+
+1- POST (**/createCode**) - Create dicsount codes - HTTP Response Code: **200**
 ```javascript
     HTTP/1.1 200
     Content-Type: application/json

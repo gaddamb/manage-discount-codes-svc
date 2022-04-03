@@ -2,7 +2,7 @@ from tornado.web import RequestHandler
 import tornado
 import json 
 from src.service.discount_code_service import DiscountCodeService
-from src.config.config import config
+from src.config.config import config, logger
 
 class CreateDiscountHandler(RequestHandler):
     def prepare(self):
@@ -16,6 +16,9 @@ class CreateDiscountHandler(RequestHandler):
 
     
     async def post(self):
+        logger.info("Request pay load is: ")
+        logger.info(self.request_payload)
+        
         ds = DiscountCodeService(self.request_payload, config())
         discount_codes = ds.create_discount_code()
         ds.write_to_data_store(discount_dict=discount_codes)

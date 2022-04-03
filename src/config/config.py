@@ -29,7 +29,7 @@ def get_logger():
     logging.basicConfig(filename = "service.log",
                         filemode = "w",
                         format = Log_Format, 
-                        level = logging.ERROR)
+                        level = logging.INFO)
 
     return logging.getLogger()
 
